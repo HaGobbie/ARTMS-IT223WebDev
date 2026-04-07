@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARTMS — Astronomical Real-Time Media System</title>
+
+  <!-- Google Fonts: Bebas Neue (display) + DM Sans (body) + Share Tech Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+  <!-- Animated star field — fixed behind everything -->
+  <canvas id="starfield"></canvas>
+
+  <!--
+    ═══════════════════════════════════════════
+    TRANSMISSION OVERLAY
+    Full-screen loading animation shown during
+    every API fetch. Toggled by JS.
+    ═══════════════════════════════════════════
+  -->
+  <div id="transmission-overlay" aria-hidden="true">
+    <div class="tx-ring tx-ring--outer"></div>
+    <div class="tx-ring tx-ring--middle"></div>
+    <div class="tx-ring tx-ring--inner"></div>
+    <div class="tx-core">
+      <span class="tx-icon">◈</span>
+      <span class="tx-label" id="tx-label">TRANSMITTING</span>
+      <span class="tx-dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+
+    <!-- ════ NAVIGATION ════ -->
+    <nav>
+      <div class="nav-logo">
+        <span class="wordmark">ARTMS</span>
+        <span class="badge">v3.1</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#hero">Viewer</a></li>
+        <li><a href="#archive-section">Archive</a></li>
+        <!-- Triggers a fresh batch of 4 random archive cards — no redirect -->
+        <li><a href="#archive-section" id="nav-shuffle-btn">Shuffle Archive</a></li>
+      </ul>
+    </nav>
+
+    <!-- ════════════════════════════════════════════════════════════
+         HERO — THE FULL APOD VIEWER
+         This section is the main content display. It shows whichever
+         APOD was last selected: today's on load, or any archive entry
+         when a card below is clicked. The hero shows:
+           • Full-screen background image
+           • Full (unclamped) title and description
+           • Credit, service version, download HD link
+         ════════════════════════════════════════════════════════════ -->
+    <section id="hero">
+
+      <!-- Background image — populated by loadApodIntoHero() -->
+      <div id="hero-bg" class="loading" role="img" aria-label="Astronomy Picture of the Day"></div>
+
+      <div class="hero-content">
+
+        <!-- Status tag + date -->
+        <div class="hero-meta">
+          <span class="tag" id="hero-source-tag">◈ Today's Picture</span>
+          <span class="date-label" id="hero-date">Loading...</span>
+        </div>
+
+        <!-- Title -->
+        <h1 id="hero-title">
+          <span id="hero-title-text">Querying Deep Space&hellip;</span>
+        </h1>
+
+        <!--
+          FULL DESCRIPTION — NOT clamped. The hero is the reader view;
+          the full explanation always shows here. No expand button needed.
+        -->
+        <div class="hero-description-wrapper">
+          <p id="hero-explanation"></p>
+        </div>
+
+        <!--
+          DETAIL STRIP — glassmorphism panel with enriched metadata:
+          photographer credit, service version, and a Download HD button.
+          Also contains the "← Previous Day" in-app navigation button.
+        -->
+        <div class="hero-detail-strip" id="hero-detail-strip">
+
+          <div class="detail-pill" id="hero-credit-pill">
+            <span class="detail-pill__label">Credit</span>
+            <span class="detail-pill__value" id="hero-credit-value">NASA / JPL</span>
+          </div>
+
+          <div class="detail-pill">
+            <span class="detail-pill__label">Service Version</span>
+            <span class="detail-pill__value" id="hero-version-value">—</span>
+          </div>
+
+          <!-- Download HD: href set to nasaData.hdurl by JS -->
+          <a
+            class="btn-download"
+            id="hero-download-btn"
+            href="#"
+            target="_blank"
+            rel="noopener"
+            aria-label="Download full-resolution image"
+          >⬇ Download HD</a>
+
+          <!--
+            Previous Day — triggers loadApodIntoHero(previousDate) in JS.
+            No page reload, no external link. Fully in-app.
+          -->
+          <button class="btn-prev-hero" id="hero-prev-btn" aria-label="Load previous day's APOD">
+            ← Previous Day
+          </button>
+
+        </div><!-- end .hero-detail-strip -->
+
+      </div><!-- end .hero-content -->
+
+      <!-- Attribution bar at the very bottom of the hero -->
+      <div class="hero-footer-bar">
+        <span id="hero-copyright">© NASA / JPL</span>
+        <span>Powered by NASA Open APIs</span>
+      </div>
+
+    </section><!-- end #hero -->
+
+
+    <!-- ════════════════════════════════════════════════════════════
+         ARCHIVE SECTION
+         On page load, 4 random APOD entries are fetched and displayed
+         here as large, fully-readable cards. Each card is clickable —
+         clicking it calls loadApodIntoHero(date) which updates the hero
+         above without any page reload or external navigation.
+
+         The date-picker lets users search for a specific date; submitting
+         it also calls loadApodIntoHero() directly, updating the hero.
+         ════════════════════════════════════════════════════════════ -->
+    <section id="archive-section">
+
+      <div class="archive-header">
+        <div class="section-title-block">
+          <span class="section-eyebrow">⊕ Mission Archive</span>
+          <h2 class="section-title">Browse the Cosmos</h2>
+          <p class="section-subtitle">
+            Click any card to load it as the full viewer above.
+            Use the date picker to jump to a specific mission date.
+          </p>
+        </div>
+
+        <!-- Search controls: date picker + TRANSMIT button -->
+        <div class="search-controls" role="search" aria-label="Jump to a specific APOD date">
+          <div class="date-input-wrapper">
+            <input
+              type="date"
+              id="date-picker"
+              aria-label="Select a date to jump to"
+              title="Pick any date from June 16, 1995 onwards"
+            />
+          </div>
+          <button class="btn-launch" id="search-btn" aria-label="Load selected date">
+            <span class="btn-icon">⟢</span>
+            <span id="btn-label">JUMP TO DATE</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error Banner -->
+      <div id="error-banner" role="alert" aria-live="polite">
+        <span class="error-icon">⚠</span>
+        <div class="error-text">
+          <div class="error-title" id="error-title">System Alert</div>
+          <div class="error-body"  id="error-body">An unknown error occurred.</div>
+        </div>
+        <button class="error-close" id="error-close" aria-label="Dismiss error">✕</button>
+      </div>
+
+      <!--
+        ARCHIVE CARDS GRID
+        Populated on page load with 4 random APOD entries.
+        Each card is a full-detail, clickable glassmorphism panel.
+        Re-shuffled by the "Shuffle Archive" nav link.
+      -->
+      <div id="archive-grid" role="region" aria-label="Archive entries" aria-live="polite">
+        <!-- Cards injected here by renderArchiveCard() in main.js -->
+      </div>
+
+      <!-- Refresh button at the bottom of the grid -->
+      <div class="archive-refresh-row">
+        <button class="btn-shuffle" id="shuffle-btn" aria-label="Load 4 new random APOD entries">
+          ⟳ Shuffle — Load 4 New Random Entries
+        </button>
+      </div>
+
+    </section><!-- end #archive-section -->
+
+
+    <!-- ════ FOOTER ════ -->
+    <footer>
+      <div class="footer-logo">ARTMS</div>
+      <div class="footer-credits">
+        Astronomical Real-Time Media System<br/>
+        Powered by NASA Open APIs · Integrative Programming Project<br/>
+        Data courtesy of the National Aeronautics and Space Administration
+      </div>
+    </footer>
+
+  </div><!-- end .page-wrapper -->
+
+  <!-- ES Module — Vite resolves import.meta.env at build time -->
+  <script type="module" src="./main.js"></script>
+
+</body>
+</html>
