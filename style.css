@@ -440,8 +440,14 @@ nav {
 
 .btn-download:active { transform: translateY(0); }
 
-/* Previous Day button (hero strip) */
-.btn-prev-hero {
+/* Previous / Next Day navigation button pair */
+.hero-day-nav {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.btn-day-nav {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -452,21 +458,33 @@ nav {
   color: var(--clr-muted);
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
-  padding: 0.5em 1.1em;
+  padding: 0.5em 1em;
   cursor: pointer;
   white-space: nowrap;
-  transition: color var(--transition), border-color var(--transition), background var(--transition), transform 0.15s;
+  transition: color var(--transition), border-color var(--transition),
+              background var(--transition), transform 0.15s, opacity 0.2s;
   border-radius: 1px;
 }
 
-.btn-prev-hero:hover {
+.btn-day-nav:hover:not(:disabled) {
   color: var(--clr-cyan);
   border-color: rgba(0,200,255,0.4);
   background: rgba(0,200,255,0.06);
-  transform: translateX(-2px);
 }
 
-.btn-prev-hero:active { transform: translateX(0); }
+/* Prev slides left, Next slides right on hover */
+.btn-day-nav:not(.btn-day-nav--next):hover:not(:disabled) { transform: translateX(-2px); }
+.btn-day-nav--next:hover:not(:disabled)                    { transform: translateX(2px);  }
+
+.btn-day-nav:active:not(:disabled) { transform: translateX(0); }
+
+/* Disabled state — shown when at the latest published entry (Next Day)
+   or at the archive epoch (Previous Day) */
+.btn-day-nav:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+  pointer-events: none;   /* prevent any hover / click bleed-through */
+}
 
 /* Hero bottom attribution bar */
 .hero-footer-bar {
