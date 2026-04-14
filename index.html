@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ARTMS NASA Daily Updates</title>
+  <title>ARTMS Updates</title>
 
   <!-- Google Fonts: Bebas Neue (display) + DM Sans (body) + Share Tech Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -43,7 +43,7 @@
     <nav>
       <div class="nav-logo">
         <span class="wordmark">ARTMS</span>
-        <span class="badge">v3.1</span>
+        <span class="badge">v3.3</span>
       </div>
       <ul class="nav-links">
         <li><a href="#hero">Viewer</a></li>
@@ -90,8 +90,13 @@
 
         <!--
           DETAIL STRIP — glassmorphism panel with enriched metadata:
-          photographer credit, service version, and a Download HD button.
-          Also contains the "← Previous Day" in-app navigation button.
+          photographer credit, service version, Download HD button, and
+          in-app Previous / Next Day navigation buttons.
+
+          Managed by loadApodIntoHero() in main.js:
+            • hero-prev-btn  — always enabled unless at APOD_EPOCH_START
+            • hero-next-btn  — disabled when the active entry equals the
+                               most recently published date (latestPublishedDate)
         -->
         <div class="hero-detail-strip" id="hero-detail-strip">
 
@@ -105,7 +110,7 @@
             <span class="detail-pill__value" id="hero-version-value">—</span>
           </div>
 
-          <!-- Download HD: href set to nasaData.hdurl by JS -->
+          <!-- Download HD: href populated from nasaData.hdurl by JS -->
           <a
             class="btn-download"
             id="hero-download-btn"
@@ -115,13 +120,21 @@
             aria-label="Download full-resolution image"
           >⬇ Download HD</a>
 
-          <!--
-            Previous Day — triggers loadApodIntoHero(previousDate) in JS.
-            No page reload, no external link. Fully in-app.
-          -->
-          <button class="btn-prev-hero" id="hero-prev-btn" aria-label="Load previous day's APOD">
-            ← Previous Day
-          </button>
+          <!-- In-app day navigation — no page reload, no external links -->
+          <div class="hero-day-nav">
+            <button class="btn-day-nav" id="hero-prev-btn" aria-label="Load previous day's APOD">
+              ← Prev
+            </button>
+            <!--
+              Next Day button is disabled when the viewer is showing the
+              most recently published entry (latestPublishedDate), preventing
+              requests for dates NASA has not yet published.
+            -->
+            <button class="btn-day-nav btn-day-nav--next" id="hero-next-btn"
+                    aria-label="Load next day's APOD" disabled>
+              Next →
+            </button>
+          </div>
 
         </div><!-- end .hero-detail-strip -->
 
